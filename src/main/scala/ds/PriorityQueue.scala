@@ -89,9 +89,19 @@ private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] =
    * @param other the node to link
    * @return Node with this and other linked.
    */
-  def link(other: Node[A]) =
-    if (ord.compare(data, other.data) < 0) Node(data, rank+1, other :: children)
-    else Node(other.data, other.rank+1, this :: other.children)
+  def link(other: Node[A]) = {
+    println("In Node def link, this:" + this + " other:" + other)
+    if (ord.compare(data, other.data) < 0) {
+      val new_n = Node(data, rank+1, other :: children)
+      println("In Node def link, creating new Node with this.data, adding other to this.children: " + new_n)
+      new_n
+    }
+    else {
+      val new_n = Node(other.data, other.rank+1, this :: other.children)
+      println("In Node def link, creating new Node with other.data, adding this to other.children: " + new_n)
+      new_n
+    }
+  }
 
   def toList : List[A] = data :: children.flatMap(_.toList)
 
@@ -123,6 +133,9 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
 
   def deleteMin(): PriorityQueue[A] = {
     val minNode = nodes.min
+    println("In BinomialQueue def deleteMin, minNode: " + minNode +
+        "\n" + "calling BinomialQueue meldLists filter out minNode")
+    // Why is reverse called on children?
     BinomialQueue(meldLists(nodes.filter(_ != minNode), minNode.children.reverse))
   }
 
@@ -136,12 +149,17 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
   override def isEmpty: Boolean = nodes.isEmpty
   override def iterator: Iterator[A] = nodes.flatMap(_.toList).iterator
 
-  private def meldLists[T](q1: List[Node[T]], q2: List[Node[T]]) : List[Node[T]] = (q1, q2) match {
-    case (Nil, q) => q
-    case (q, Nil) => q
-    case (x :: xs, y :: ys) => if (x.rank < y.rank) x :: meldLists(xs, y :: ys)
-    else if (x.rank > y.rank) y :: meldLists(x :: xs, ys)
-    else insertNode(x.link(y), meldLists(xs, ys))
+  private def meldLists[T](q1: List[Node[T]], q2: List[Node[T]]): List[Node[T]] = {
+    println("In BinomialQueue def meldLists, q1: " + q1 + " | q2: " + q2)
+    (q1, q2) match {
+	    case (Nil, q) => q
+	    case (q, Nil) => q
+	    case (x :: xs, y :: ys) => {
+	    		if (x.rank < y.rank) x :: meldLists(xs, y :: ys)
+		    else if (x.rank > y.rank) y :: meldLists(x :: xs, ys)
+		    else insertNode(x.link(y), meldLists(xs, ys))
+	    }
+	}
   }
 
   private def insertNode[T](n: Node[T], list: List[Node[T]]): List[Node[T]] = {
