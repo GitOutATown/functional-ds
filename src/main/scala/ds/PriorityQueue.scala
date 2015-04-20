@@ -58,11 +58,14 @@ abstract class PriorityQueue[A](implicit val ord: Ordering[A])
 }
 
 object PriorityQueue extends OrderedTraversableFactory[PriorityQueue] {
-
+  println("In object PriorityQueue")
   // Methods related to scala collections
   override def newBuilder[A](implicit ord: Ordering[A]): mutable.Builder[A, PriorityQueue[A]] =
     new ArrayBuffer[A] mapResult { xs =>
-      xs.foldLeft(BinomialQueue[A](Nil))((t, x) => t + x)
+      println("In def newBuilder, xs: " + xs)
+      val bq = xs.foldLeft(BinomialQueue[A](Nil))((t, x) => t + x)
+      println("")
+      bq
     }
 
   implicit def canBuildFrom[A](implicit ord: Ordering[A]): CanBuildFrom[Coll, A, PriorityQueue[A]] = new GenericCanBuildFrom[A]
@@ -79,6 +82,8 @@ object PriorityQueue extends OrderedTraversableFactory[PriorityQueue] {
 private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] = Nil)
                           (implicit val ord: Ordering[A]) extends Ordered[Node[A]] {
 
+  println("In Node constructor, data:" + data + " rank:" + rank + " children:" + children)
+  
   /**
    * Links this node with another one and appropriately rearranges things.
    * @param other the node to link
@@ -101,10 +106,20 @@ private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] =
  */
 private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit override val ord: Ordering[A])
   extends PriorityQueue[A] {
+  
+  println("In BinomialQueue constructor, nodes: " + nodes)
 
-  def +(x: A) : BinomialQueue[A] = BinomialQueue(insertNode(Node(x), nodes))
+  def +(x: A): BinomialQueue[A] = {
+    println("In BinomialQueue def +, calling BinomialQueue(insertNode...)...")
+    val bq = BinomialQueue(insertNode(Node(x), nodes))
+    println("In BinomialQueue def +, bq: " + bq)
+    bq
+  }
 
-  def findMin: A = nodes.min.data
+  def findMin: A = {
+    println("In BinomialQueue def findMin. nodes is just a List, so implicit min is easy...")
+    nodes.min.data
+  }
 
   def deleteMin(): PriorityQueue[A] = {
     val minNode = nodes.min
@@ -129,9 +144,36 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
     else insertNode(x.link(y), meldLists(xs, ys))
   }
 
-  private def insertNode[T](n: Node[T], lst: List[Node[T]]) : List[Node[T]] = lst match {
-    case Nil => List(n)
-    case x :: xs => if (n.rank < x.rank) n :: x :: xs
-    else insertNode(x.link(n), xs)
+  private def insertNode[T](n: Node[T], list: List[Node[T]]): List[Node[T]] = {
+    println("In BinomialQueue def insertNode TOP, n: " + n + " | list: + " + list)
+    
+    list match {
+	    case Nil => {
+	      println("In BinomialQueue def insertNode list match case Nil, returning List(n)...")
+	      List(n)
+	    }
+	    case x :: xs => {
+	      println("In BinomialQueue def insertNode list match case x :: xs," +
+	          "\n" + "n.rank:" + n.rank + " x.rank:" + x.rank)
+	      if (n.rank < x.rank) {
+	        println("In BinomialQueue def insertNode list match case x :: xs," +
+	            "\n" + "cons list as: " + n + " :: " + x + " :: " + xs)
+	        n :: x :: xs
+	      }
+	      else {
+	        println("In BinomialQueue def insertNode list match case x :: xs," +
+	            "\n" + "calling insertNode(" + x + ".link(" + n + "), " + xs + ")")
+	        insertNode(x.link(n), xs)
+	      }
+	    }
+	}
   }
-}
+} // end BinomialQueue
+
+
+
+
+
+
+
+
