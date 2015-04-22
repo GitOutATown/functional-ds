@@ -58,14 +58,14 @@ abstract class PriorityQueue[A](implicit val ord: Ordering[A])
 }
 
 object PriorityQueue extends OrderedTraversableFactory[PriorityQueue] {
-  println("In object PriorityQueue TOP")
+  // println("In object PriorityQueue TOP")
   // Methods related to scala collections
   override def newBuilder[A](implicit ord: Ordering[A]): mutable.Builder[A, PriorityQueue[A]] = {
-    println("In object PriorityQueue def newBuilder")
+    // println("In object PriorityQueue def newBuilder")
     new ArrayBuffer[A] mapResult { xs =>
-      println("In def newBuilder, creating ArrayBuffer, xs: " + xs)
+      // println("In def newBuilder, creating ArrayBuffer, xs: " + xs)
       val bq = xs.foldLeft(BinomialQueue[A](Nil))((t, x) => t + x)
-      println("In def newBuilder, mapped xs into bq, bq: " + bq)
+      // println("In def newBuilder, mapped xs into bq, bq: " + bq)
       bq
     }
   }
@@ -85,7 +85,7 @@ object PriorityQueue extends OrderedTraversableFactory[PriorityQueue] {
 private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] = Nil)
                           (implicit val ord: Ordering[A]) extends Ordered[Node[A]] {
 
-  println("In Node constructor, data:" + data + " rank:" + rank + " children:" + children)
+  // println("In Node constructor, data:" + data + " rank:" + rank + " children:" + children)
   
   /**
    * Links this node with another one and appropriately rearranges things.
@@ -101,24 +101,24 @@ private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] =
    * 
    * One thing that is notable structurally is that the child node is prepended (cons)
    * to the Node.children list. This means that the BinomialQueue.nodes List is ordered 
-   * in ascending order according to rank (DO I KNOW THIS TO BE TRUE? YES! See meldLists),
+   * in ascending order according to rank (Do I know this to be true? Yes, see meldLists),
    * while the Node.children List is ordered in descending rank. (See
    * diagram http://en.wikipedia.org/wiki/Binomial_heap#/media/File:Binomial_Trees.svg).
    */ 
   def link(other: Node[A]) = {
-    println("In Node def link, this.data:" + this.data + " other.data:" + other.data)
+    // println("In Node def link, this.data:" + this.data + " other.data:" + other.data)
     
     /* data is the basis of priority for the PriorityQueue. The node with the lesser data
      * value becomes the root and the other becomes its child.
      */
     if (ord.compare(data, other.data) < 0) { 
       val new_n = Node(data, rank+1, other :: children)
-      println("In Node def link, creating new Node with this.data:" + this.data + ", cons other:" + other + " to this.children: " + new_n)
+      // println("In Node def link, creating new Node with this.data:" + this.data + ", cons other:" + other + " to this.children: " + new_n)
       new_n
     }
     else {
       val new_n = Node(other.data, other.rank+1, this :: other.children)
-      println("In Node def link, creating new Node with other.data:" + other.data + ", cons this:" + this + " to other.children: " + new_n)
+      // println("In Node def link, creating new Node with other.data:" + other.data + ", cons this:" + this + " to other.children: " + new_n)
       new_n
     }
   }
@@ -137,37 +137,43 @@ private[ds] case class Node[A](data: A, rank: Int = 0, children: List[Node[A]] =
 private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit override val ord: Ordering[A])
   extends PriorityQueue[A] {
   
-  println("In BinomialQueue constructor, nodes: " + nodes)
+  // println("In BinomialQueue constructor, nodes: " + nodes)
 
   def +(x: A): BinomialQueue[A] = {
-    println("In BinomialQueue def +, calling BinomialQueue(insertNode...)...")
+    // println("In BinomialQueue def +, calling BinomialQueue(insertNode...)...")
     val bq = BinomialQueue(insertNode(Node(x), nodes)) // assuming nodes are implicitly ordered by rank
-    println("In BinomialQueue def +, bq: " + bq)
+    // println("In BinomialQueue def +, bq: " + bq)
     bq
   }
 
   def findMin: A = {
-    println("In BinomialQueue def findMin. nodes is just a List, so implicit min is easy...")
+    // println("In BinomialQueue def findMin. nodes is just a List, so implicit min is easy...")
     nodes.min.data // min comes from TraversableOnce. See also GenericOrderedTraversableTemplate, OrderedTraversableFactory, GenericOrderedCompanion, Ordering, Ordered
   }
 
-  def deleteMin(): PriorityQueue[A] = {
+  def deleteMin: PriorityQueue[A] = {
     val minNode = nodes.min
     println("In BinomialQueue def deleteMin, minNode: " + minNode +
         "\n" + "calling BinomialQueue meldLists filter out minNode")
-    // Why is reverse called on children?
+    /* 
+     * Why is reverse called on children? We're removing the min node, but not
+     * its children, so they have to be melded back into the BinomialQueue.nodes
+     * List. As I've previously pointed out (meldList comments above), the 
+     * Node.children List is ordered in descending rank whereas the BinomialQueue.nodes 
+     * list is ordered in ascending rank, hense the reverse of minNode.children. 
+     */
     BinomialQueue(meldLists(nodes.filter(_ != minNode), minNode.children.reverse))
   }
 
   def meld(that: PriorityQueue[A]): PriorityQueue[A] = {
-    println("In BinomialQueue def meld," +
-        "\n" + "this: " + this +
-        "\n" + "that: " + that)
+    // println("In BinomialQueue def meld," +
+        //"\n" + "this: " + this +
+        //"\n" + "that: " + that)
     (this, that) match {
 	    case (BinomialQueue(Nil), q) => q
 	    case (q, BinomialQueue(Nil)) => q
 	    case (BinomialQueue(thisList), BinomialQueue(thatList)) => {
-	      println("In BinomialQueue def meld, calling BinomialQueue meldLists...")
+	      // println("In BinomialQueue def meld, calling BinomialQueue meldLists...")
 	      BinomialQueue(meldLists(thisList, thatList))
 	    }
 	}
@@ -184,18 +190,23 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
    */
   // Recursive
   private def meldLists[T](q1: List[Node[T]], q2: List[Node[T]]): List[Node[T]] = {
-    println("In BinomialQueue def meldLists, q1: " + q1 + " | q2: " + q2)
+    // println("In BinomialQueue def meldLists, q1: " + q1 + " | q2: " + q2)
     (q1, q2) match {
 	    case (Nil, q) => q // convergence condition, stops recursion
 	    case (q, Nil) => q // convergence condition, stops recursion
 	    case (x :: xs, y :: ys) => {
-	    		println("In BinomialQueue def meldLists, case(x :: xs, y :: ys)" +
+	    		/*println("In BinomialQueue def meldLists, case(x :: xs, y :: ys)" +
 	    		    "\n" + "recursing meldLists based on x: " + x +
-	    		    "\n" + "and y: " + y)
+	    		    "\n" + "and y: " + y)*/
 	    		// ordering trees in ascending size (i.e. rank, or number of children)
 	    		if (x.rank < y.rank) x :: meldLists(xs, y :: ys) // recurse
 		    else if (x.rank > y.rank) y :: meldLists(x :: xs, ys) // recurse
-		    else insertNode(x.link(y), meldLists(xs, ys)) // both trees are the same size, so they can be joined
+		    else {
+		      // both trees are the same size, so they can be joined
+		      println("In BinomialQueue def meldLists list match case (x :: xs, y :: ys)," +
+	            "\n" + "calling insertNode(x:" + x + ".link(y:" + y + "), meldLists(xs, ys))")
+		      insertNode(x.link(y), meldLists(xs, ys))
+		    }
 	    }
 	}
   }
@@ -204,7 +215,7 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
    * one other call from BinomialQueue def + with implicit ordering).
    */
   private def insertNode[T](n: Node[T], list: List[Node[T]]): List[Node[T]] = {
-    println("In BinomialQueue def insertNode TOP, n: " + n + " | list: + " + list)
+    println("In BinomialQueue def insertNode TOP, n: " + n + " | list: " + list)
     
     list match {
     		// Easy, inserted node is first and only node in list...
@@ -225,11 +236,14 @@ private[ds] final case class BinomialQueue[A] (nodes: List[Node[A]])(implicit ov
 	      }
 	      else {
 	        /* Oh, this confuses me: I get that if n.rank is smaller than rank of the current head
-	         * then n should become head, but on what logic can we assume that if n.rank is not
-	         * less that x.rank that they therefor must be the same size? (link only joins trees/heaps
-	         * of the same size (rank)). */
+	         * then n should become head, but on what basis can we assume that if n.rank is not
+	         * less that x.rank that they therefor must be the same size and never larger? 
+	         * (link only joins trees/heaps of the same size (rank)). I guess it is that the inserted
+	         * node, coming from meldLists, has had its rank increased by 1 and is now being compared
+	         * with the next node in the list. So the inserted node, if not less than the next node's,
+	         * rank, must therefor be equal to it. */
 	        println("In BinomialQueue def insertNode list match case x :: xs," +
-	            "\n" + "calling insertNode(" + x + ".link(" + n + "), " + xs + ")")
+	            "\n" + "calling insertNode(x:" + x + ".link(n:" + n + "), " + xs + ")")
 	        insertNode(x.link(n), xs) // recurse
 	      }
 	    }

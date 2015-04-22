@@ -3,7 +3,8 @@ package ds
 object rw_PQ_init_lab_2 extends App {
   
 	println("==> START, calling PriorityQueue instantiation...")
-	val pq = PriorityQueue(4,3,2,1,5)
+	//val pq = PriorityQueue(4,3,2,1,5)
+	val pq = PriorityQueue(4,3,2,1,5,20,99,6,8,42,27,26,18,19)
 	println("--> pq: " + pq)
 	
 	println("\n--> calling min...")
@@ -23,6 +24,5 @@ object rw_PQ_init_lab_2 extends App {
 	println("--> thirdMin: " + thirdMin)
 
 }
-
 
 
